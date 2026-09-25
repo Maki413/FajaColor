@@ -9,6 +9,7 @@
 namespace faja {
 
 extern QueueHandle_t colorQueue;
+extern SystemState systemState;
 
 void createSystemTasks();
 void taskControl(void *parameters);

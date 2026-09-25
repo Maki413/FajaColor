@@ -5,29 +5,44 @@
 namespace faja {
 
 QueueHandle_t colorQueue = nullptr;
+SystemState systemState = SystemState::STOPPED;
 
 namespace {
-bool systemRunning = false;
+void setStoppedState() {
+  setMotorEnabled(false);
+  clearRgb();
+  systemState = SystemState::STOPPED;
 }
+
+void setRunningState() {
+  setMotorEnabled(true);
+  systemState = SystemState::RUNNING;
+}
+
+void setAnalyzingState() {
+  setMotorEnabled(false);
+  systemState = SystemState::ANALYZING;
+}
+
+void setWaitingOutputState() {
+  setMotorEnabled(true);
+  systemState = SystemState::WAITING_OUTPUT;
+}
+}  // namespace
 
 void taskControl(void *parameters) {
   (void)parameters;
 
   for (;;) {
-    if (readStopButton()) {
-      if (systemRunning) {
-        setMotorEnabled(false);
-        clearRgb();
-        systemRunning = false;
-      }
+    if (readStopButton() && systemState != SystemState::STOPPED) {
+      setStoppedState();
     }
 
-    if (readStartButton() && !systemRunning) {
-      setMotorEnabled(true);
-      systemRunning = true;
+    if (readStartButton() && systemState == SystemState::STOPPED) {
+      setRunningState();
     }
 
-    vTaskDelay(pdMS_TO_TICKS(20));
+    vTaskDelay(pdMS_TO_TICKS(CONTROL_TASK_PERIOD_MS));
   }
 }
 
@@ -35,24 +50,37 @@ void taskColorSensor(void *parameters) {
   (void)parameters;
 
   for (;;) {
-    if (readIR()) {
-      DetectedColor color = readColorFromSensor();
-      xQueueSend(colorQueue, &color, portMAX_DELAY);
+    if (systemState == SystemState::RUNNING && readIR()) {
+      const DetectedColor color = readColorFromSensor();
+      if (color != DetectedColor::UNKNOWN) {
+        xQueueSend(colorQueue, &color, portMAX_DELAY);
+        setAnalyzingState();
+      }
     }
 
-    vTaskDelay(pdMS_TO_TICKS(20));
+    vTaskDelay(pdMS_TO_TICKS(CONTROL_TASK_PERIOD_MS));
   }
 }
 
 void taskActuator(void *parameters) {
   (void)parameters;
 
-  DetectedColor color = DetectedColor::UNKNOWN;
-
   for (;;) {
-    if (xQueueReceive(colorQueue, &color, portMAX_DELAY) == pdPASS) {
-      moveServosForColor(color);
+    if (systemState == SystemState::ANALYZING) {
+      DetectedColor color = DetectedColor::UNKNOWN;
+      if (xQueueReceive(colorQueue, &color, 0) == pdPASS) {
+        moveServosForColor(color);
+        vTaskDelay(pdMS_TO_TICKS(COLOR_ANALYSIS_MS));
+        clearRgb();
+        setWaitingOutputState();
+      }
     }
+
+    if (systemState == SystemState::WAITING_OUTPUT && !readIR()) {
+      setRunningState();
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(CONTROL_TASK_PERIOD_MS));
   }
 }
 
