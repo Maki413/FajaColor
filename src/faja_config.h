@@ -30,6 +30,10 @@ constexpr int PIN_RGB_B = 23;
 constexpr int COLOR_MARGIN = 15;
 constexpr uint32_t COLOR_ANALYSIS_MS = 2000;
 constexpr uint32_t CONTROL_TASK_PERIOD_MS = 20;
+constexpr uint32_t WIFI_CONNECTION_TIMEOUT_MS = 30000;
+
+constexpr char WIFI_SSID[] = "TU_SSID";
+constexpr char WIFI_PASSWORD[] = "TU_PASSWORD";
 
 enum class DetectedColor {
   UNKNOWN,
