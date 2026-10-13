@@ -49,4 +49,14 @@ enum class SystemState {
   WAITING_OUTPUT
 };
 
+struct WebStatus {
+  uint32_t objectCount;
+  uint32_t blueCount;
+  uint32_t greenCount;
+  uint32_t redCount;
+  DetectedColor latestColor;
+  DetectedColor rgbColor;
+  SystemState systemState;
+};
+
 }  // namespace faja

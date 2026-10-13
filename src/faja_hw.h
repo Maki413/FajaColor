@@ -9,8 +9,10 @@ namespace faja {
 
 extern SystemState systemState;
 
-String buildWebPage(uint32_t objectCount, DetectedColor latestColor, bool motorEnabled);
-String buildStatusJson(uint32_t objectCount, DetectedColor latestColor, bool motorEnabled);
+String buildWebPage(const WebStatus& status);
+String buildStatusJson(const WebStatus& status);
+const char *detectedColorName(DetectedColor color);
+DetectedColor getRgbLedColor();
 void connectToWifi();
 void configureWebServer();
 void handleWebClient();
