@@ -4,8 +4,8 @@
 
 namespace faja {
 
-constexpr int PIN_START = 34;
-constexpr int PIN_STOP = 35;
+constexpr int PIN_START = 32;
+constexpr int PIN_STOP = 33;
 constexpr int PIN_IR = 13;
 
 constexpr int PIN_S0 = 16;
@@ -27,8 +27,8 @@ constexpr int PIN_RGB_R = 21;
 constexpr int PIN_RGB_G = 22;
 constexpr int PIN_RGB_B = 23;
 
-constexpr int COLOR_MARGIN = 15;
-constexpr uint32_t COLOR_ANALYSIS_MS = 2000;
+constexpr int COLOR_MARGIN = 3;
+constexpr uint32_t COLOR_ANALYSIS_MS = 3000;
 constexpr uint32_t CONTROL_TASK_PERIOD_MS = 20;
 constexpr uint32_t WIFI_CONNECTION_TIMEOUT_MS = 30000;
 

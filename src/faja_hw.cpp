@@ -64,8 +64,8 @@ void handleWebClient() {
 }
 
 void hardwareBegin() {
-  pinMode(PIN_START, INPUT);
-  pinMode(PIN_STOP, INPUT);
+  pinMode(PIN_START, INPUT_PULLDOWN);
+  pinMode(PIN_STOP, INPUT_PULLDOWN);
   pinMode(PIN_IR, INPUT);
 
   pinMode(PIN_S0, OUTPUT);
@@ -75,7 +75,7 @@ void hardwareBegin() {
   pinMode(PIN_OUT, INPUT);
 
   digitalWrite(PIN_S0, HIGH);
-  digitalWrite(PIN_S1, LOW);
+  digitalWrite(PIN_S1, HIGH);
 
   pinMode(PIN_IN1, OUTPUT);
   pinMode(PIN_IN2, OUTPUT);
@@ -95,7 +95,7 @@ void hardwareBegin() {
   servo2.attach(PIN_SERVO2, 500, 2400);
 
   setServoAngle(servo1, 0);
-  setServoAngle(servo2, 0);
+  setServoAngle(servo2, 180);
 
   setMotorEnabled(false);
 }
@@ -172,46 +172,55 @@ DetectedColor readColorFromSensor() {
   digitalWrite(PIN_S3, HIGH);
   unsigned long gPulse = pulseIn(PIN_OUT, LOW, 80000);
 
+  DetectedColor color = DetectedColor::UNKNOWN;
   if (bPulse < rPulse - COLOR_MARGIN && bPulse < gPulse - COLOR_MARGIN) {
-    return DetectedColor::BLUE;
+    color = DetectedColor::BLUE;
+  } else if (gPulse < rPulse - COLOR_MARGIN && gPulse < bPulse - COLOR_MARGIN) {
+    color = DetectedColor::GREEN;
+  } else if (rPulse < gPulse - COLOR_MARGIN && rPulse < bPulse - COLOR_MARGIN) {
+    color = DetectedColor::RED;
   }
 
-  if (gPulse < rPulse - COLOR_MARGIN && gPulse < bPulse - COLOR_MARGIN) {
-    return DetectedColor::GREEN;
+  if (color != DetectedColor::UNKNOWN) {
+    Serial.printf("-> Color %s | Señal: R=%lu us, G=%lu us, B=%lu us\n",
+                  detectedColorName(color),
+                  rPulse,
+                  gPulse,
+                  bPulse);
   }
 
-  if (rPulse < gPulse - COLOR_MARGIN && rPulse < bPulse - COLOR_MARGIN) {
-    return DetectedColor::RED;
-  }
-
-  return DetectedColor::UNKNOWN;
+  return color;
 }
 
 void moveServosForColor(DetectedColor color) {
   switch (color) {
     case DetectedColor::BLUE:
       setRgbColor(false, false, true);
+      setServoAngle(servo2, 180);
+      vTaskDelay(pdMS_TO_TICKS(1000));  // Wait for servo1 to reach position
       setServoAngle(servo1, 45);
-      setServoAngle(servo2, 0);
       break;
 
     case DetectedColor::GREEN:
       setRgbColor(false, true, false);
       setServoAngle(servo1, 0);
-      setServoAngle(servo2, 45);
+      vTaskDelay(pdMS_TO_TICKS(1000));  // Wait for servo1 to reach position
+      setServoAngle(servo2, 135);
       break;
 
     case DetectedColor::RED:
       setRgbColor(true, false, false);
       setServoAngle(servo1, 0);
-      setServoAngle(servo2, 0);
+      vTaskDelay(pdMS_TO_TICKS(1000));  // Wait for servo1 to reach position
+      setServoAngle(servo2, 180);
       break;
 
     default:
       Serial.println("-> Color no determinado");
       clearRgb();
       setServoAngle(servo1, 0);
-      setServoAngle(servo2, 0);
+      vTaskDelay(pdMS_TO_TICKS(1000));  // Wait for servo1 to reach position
+      setServoAngle(servo2, 180);
       break;
   }
 }

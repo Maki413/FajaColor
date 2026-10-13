@@ -111,6 +111,7 @@ void taskColorSensor(void *parameters) {
 
   for (;;) {
     if (currentSystemState() == SystemState::RUNNING && readIR()) {
+      setAnalyzingState();
       const DetectedColor color = readColorFromSensor();
       if (color != DetectedColor::UNKNOWN) {
         portENTER_CRITICAL(&telemetryMux);
@@ -131,7 +132,6 @@ void taskColorSensor(void *parameters) {
         }
         portEXIT_CRITICAL(&telemetryMux);
         xQueueSend(colorQueue, &color, portMAX_DELAY);
-        setAnalyzingState();
       }
     }
 
